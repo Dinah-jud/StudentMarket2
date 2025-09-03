@@ -26,7 +26,7 @@ public class Student {
     @JoinColumn(name = "residence_id")
     protected Residence residence;
 
-    @OneToMany(mappedBy = "seller")
+    @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
     protected List<Product> productForSale;
 
     @OneToMany(mappedBy = "buyer")
