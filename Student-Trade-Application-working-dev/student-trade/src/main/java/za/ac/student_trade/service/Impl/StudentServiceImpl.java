@@ -1,5 +1,7 @@
 package za.ac.student_trade.service.Impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import za.ac.student_trade.domain.Residence;
@@ -7,21 +9,31 @@ import za.ac.student_trade.domain.Student;
 import za.ac.student_trade.factory.StudentFactory;
 import za.ac.student_trade.repository.ResidenceRepository;
 import za.ac.student_trade.repository.StudentRepository;
+import za.ac.student_trade.service.Impl.EmailService;
 import za.ac.student_trade.service.IStudentService;
 
 import java.io.IOException;
 import java.util.*;
 
 @Service
-public class StudentServiceImpl implements IStudentService{
+public class StudentServiceImpl implements IStudentService {
 
     private final StudentRepository studentRepository;
-private final ResidenceRepository residenceRepository;
+    private final ResidenceRepository residenceRepository;
+    private final EmailService emailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
 
-    public StudentServiceImpl(StudentRepository studentRepository, ResidenceRepository residenceRepository) {
+    // Temporary store for OTPs
+    private final Map<String, String> otpStore = new HashMap<>();
+    private final Map<String, Long> otpExpiry = new HashMap<>();
+
+    public StudentServiceImpl(StudentRepository studentRepository, ResidenceRepository residenceRepository,  EmailService emailService) {
         this.studentRepository = studentRepository;
         this.residenceRepository = residenceRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -34,10 +46,8 @@ private final ResidenceRepository residenceRepository;
                 student.getPassword(),
                 student.getResidence()
         );
-
         return studentRepository.save(createdStudent);
     }
-
 
     @Override
     public Student read(String s) {
@@ -50,11 +60,8 @@ private final ResidenceRepository residenceRepository;
         return this.studentRepository.save(student);
     }
 
-
-
-
     @Override
-    public List<Student> getAll(){
+    public List<Student> getAll() {
         return this.studentRepository.findAll();
     }
 
@@ -80,12 +87,11 @@ private final ResidenceRepository residenceRepository;
 
         Student.Builder studentBuilder = new Student.Builder().copy(student);
 
-        // --- Update fields if present ---
+
         if (request.getFirstName() != null) studentBuilder.setFirstName(request.getFirstName());
         if (request.getLastName() != null) studentBuilder.setLastName(request.getLastName());
         if (request.getEmail() != null) studentBuilder.setEmail(request.getEmail());
 
-        // --- Update residence ---
         if (request.getResidence() != null) {
             Residence currentResidence = student.getResidence();
             Residence.Builder residenceBuilder = (currentResidence != null)
@@ -104,7 +110,6 @@ private final ResidenceRepository residenceRepository;
             studentBuilder.setResidence(updatedResidence);
         }
 
-        // --- Optional profile image ---
         if (profileImage != null && !profileImage.isEmpty()) {
             studentBuilder.setProfileImage(profileImage.getBytes());
         }
@@ -113,5 +118,48 @@ private final ResidenceRepository residenceRepository;
         return studentRepository.save(updatedStudent);
     }
 
+    // Step 1: Send OTP
+    public String sendOtp(String email) {
+        Optional<Student> studentOpt = studentRepository.findByEmail(email);
+        if (studentOpt.isEmpty()) {
+            throw new RuntimeException("No account found with that email.");
+        }
+
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+        otpStore.put(email, otp);
+        otpExpiry.put(email, System.currentTimeMillis() + 5 * 60 * 1000); // 5 mins expiry
+
+        emailService.sendOtpEmail(email, otp);
+        return "OTP sent successfully to " + email;
+    }
+
+    // Step 2: Verify OTP and reset password
+    public String resetPassword(String email, String otp, String newPassword) {
+        if (!otpStore.containsKey(email)) {
+            throw new RuntimeException("No OTP found for this email. Request a new one.");
+        }
+
+        if (!otpStore.get(email).equals(otp)) {
+            throw new RuntimeException("Invalid OTP. Please try again.");
+        }
+
+        if (System.currentTimeMillis() > otpExpiry.get(email)) {
+            otpStore.remove(email);
+            otpExpiry.remove(email);
+            throw new RuntimeException("OTP expired. Please request a new one.");
+        }
+
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found."));
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+
+        student = new Student.Builder().copy(student).setPassword(encodedPassword).build();
+        studentRepository.save(student);
+
+        otpStore.remove(email);
+        otpExpiry.remove(email);
+        return "Password reset successful.";
+    }
 }
 

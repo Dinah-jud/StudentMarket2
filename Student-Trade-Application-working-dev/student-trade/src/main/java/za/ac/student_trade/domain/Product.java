@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "product")

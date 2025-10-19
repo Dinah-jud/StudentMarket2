@@ -40,6 +40,11 @@ public class TransactionServiceImpl implements ITransactionService {
         Product productSold = productRepository.findById(productSoldId)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + productSoldId));
 
+        // Check if product is still available
+        if (!productSold.isAvailabilityStatus()) {
+            throw new RuntimeException("Product is no longer available for purchase");
+        }
+
         Student buyer = studentRepository.findById(buyerId)
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + buyerId));
 

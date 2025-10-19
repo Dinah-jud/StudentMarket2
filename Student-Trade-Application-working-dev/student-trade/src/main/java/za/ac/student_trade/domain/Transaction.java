@@ -34,7 +34,7 @@ public class Transaction {
     @Column(name = "status")
     private TransactionStatus status;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "product_id", referencedColumnName = "product_id")
     private Product product;
 
