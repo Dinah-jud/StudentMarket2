@@ -43,7 +43,7 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public Product getProductById(Long id){
+    public Product getProductById(Long id) {
         return productRepository.findById(id).get();
     }
 
@@ -62,6 +62,55 @@ public class ProductServiceImpl implements IProductService {
     public Product update(Product product) {
         return productRepository.save(product);
     }
+
+
+    @Override
+    public Product updateProductWithImage(Product product, MultipartFile imageFile) throws IOException {
+        // Fetch existing product
+        Product existingProduct = productRepository.findById(product.getProductId()).orElse(null);
+        if (existingProduct == null) {
+            return null;
+        }
+
+        byte[] imageData = existingProduct.getImageData();
+        String imageType = existingProduct.getImageType();
+        String imageName = existingProduct.getImageName();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            imageData = imageFile.getBytes();
+            imageType = imageFile.getContentType();
+            imageName = imageFile.getOriginalFilename();
+        }
+
+        Product updatedProduct = new Product.Builder()
+                .setProductId(existingProduct.getProductId())
+                .setProductName(product.getProductName())
+                .setProductDescription(product.getProductDescription())
+                .setPrice(product.getPrice())
+                .setCondition(existingProduct.getCondition())
+                .setCurrency(existingProduct.getCurrency())
+                .setProductCategory(existingProduct.getProductCategory())
+                .setSeller(existingProduct.getSeller())
+                .setImageData(imageData)
+                .setImageType(imageType)
+                .setImageName(imageName)
+                .build();
+
+
+        return productRepository.save(updatedProduct);
+    }
+
+
+    @Override
+    public List<Product> getSoldProductsByStudent(String studentId) {
+        return productRepository.findBySellerStudentIdAndAvailabilityStatusFalse(studentId);
+    }
+
+    @Override
+    public List<Product> getAvailableProductsByStudent(String studentId) {
+        return productRepository.findBySellerStudentIdAndAvailabilityStatusTrue(studentId);
+    }
+
+
 
     @Override
     public List<Product> getAll() {

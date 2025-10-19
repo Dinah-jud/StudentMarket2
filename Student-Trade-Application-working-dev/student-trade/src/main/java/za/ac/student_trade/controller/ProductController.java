@@ -12,6 +12,7 @@ import za.ac.student_trade.domain.StripeResponse;
 import za.ac.student_trade.service.Impl.ProductServiceImpl;
 import za.ac.student_trade.service.Impl.StripeServiceImpl;
 
+import java.security.Principal;
 import java.util.List;
 
 @CrossOrigin("*")
@@ -77,4 +78,33 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/available/{studentId}")
+    public ResponseEntity<List<Product>> getAvailableProductsByStudent(@PathVariable String studentId) {
+        List<Product> products = productService.getAvailableProductsByStudent(studentId);
+        return ResponseEntity.ok(products);
+    }
+    @PutMapping(value = "/update/{productId}", consumes = "multipart/form-data")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Long productId,
+            @RequestPart Product product,
+            @RequestPart(required = false) MultipartFile productImage) {
+        try {
+            Product updatedProduct = productService.updateProductWithImage(product, productImage);
+            return ResponseEntity.ok(updatedProduct);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+
+
+    @GetMapping("/sold/{studentId}")
+    public ResponseEntity<List<Product>> getSoldProductsByStudent(@PathVariable String studentId) {
+        List<Product> products = productService.getSoldProductsByStudent(studentId);
+        return ResponseEntity.ok(products);
+    }
+
 }
+
+
+
