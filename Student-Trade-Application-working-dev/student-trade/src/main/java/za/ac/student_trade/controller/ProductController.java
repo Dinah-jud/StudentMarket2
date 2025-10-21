@@ -52,8 +52,12 @@ public class ProductController {
 
     @GetMapping("/getAllProducts")
     public List<Product> getAllProducts() {
-        return this.productService.getAll();
+        return productService.getAll()
+                .stream()
+                .filter(product -> product.isAvailabilityStatus() && product.getTransaction() == null)
+                .toList();
     }
+
 
 
     @DeleteMapping("/delete/{id}")

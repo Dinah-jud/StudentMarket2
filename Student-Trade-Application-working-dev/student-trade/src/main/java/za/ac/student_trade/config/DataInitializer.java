@@ -43,7 +43,6 @@ public class DataInitializer {
         String productionPassword = "SuperAdmin@123";
         
         try {
-            // Check if the production super admin specifically exists
             boolean productionSuperAdminExists = superAdminRepository.findAll()
                     .stream()
                     .anyMatch(sa -> sa.getEmail().equals(productionEmail));
@@ -51,7 +50,6 @@ public class DataInitializer {
             if (!productionSuperAdminExists) {
                 System.out.println("🔧 Creating production super admin...");
                 
-                // Create production super admin with properly hashed password
                 SuperAdmin superAdmin = new SuperAdmin.Builder()
                         .setUsername("superadmin")
                         .setEmail(productionEmail)
@@ -95,13 +93,11 @@ public class DataInitializer {
             for (Administrator admin : admins) {
                 String password = admin.getPassword();
                 
-                // Check if password is not already hashed (BCrypt hashes start with $2a$, $2b$, or $2y$)
-                if (password != null && 
+                if (password != null &&
                     !password.startsWith("$2a$") && 
                     !password.startsWith("$2b$") && 
                     !password.startsWith("$2y$")) {
                     
-                    // Hash the plain text password
                     Administrator updatedAdmin = new Administrator.Builder()
                             .copy(admin)
                             .setPassword(passwordEncoder.encode(password))

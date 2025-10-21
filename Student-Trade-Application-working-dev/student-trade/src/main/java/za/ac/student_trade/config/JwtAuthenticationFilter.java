@@ -24,7 +24,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Define sensitive endpoints that require additional security checks
     private static final List<String> SENSITIVE_ENDPOINTS = Arrays.asList(
         "/api/product/create",
         "/api/product/update",
@@ -36,7 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         "/api/superadmin"
     );
 
-    // Define read-only endpoints that require minimal authentication
     private static final List<String> READ_ONLY_ENDPOINTS = Arrays.asList(
         "/api/product/getAllProducts",
         "/api/product/read"
@@ -66,22 +64,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 Role role = Role.valueOf(roleStr);
 
-                // Additional security checks for sensitive endpoints
                 if (isSensitiveEndpoint(requestURI)) {
                     System.out.println("JwtAuthenticationFilter: Sensitive endpoint detected, performing additional checks");
-                    
-                    // Temporarily disable token age check for debugging
-                    /*
-                    // Check if token is recent (not older than 1 hour for sensitive operations)
-                    if (jwtUtil.isTokenOlderThan(jwt, 3600000)) { // 1 hour in milliseconds
-                        System.out.println("JwtAuthenticationFilter: Token too old for sensitive operation");
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("{\"error\":\"Token too old for sensitive operation. Please re-authenticate.\"}");
-                        return;
-                    }
-                    */
 
-                    // Additional role validation for sensitive endpoints
                     if (!isAuthorizedForSensitiveOperation(requestURI, method, role)) {
                         System.out.println("JwtAuthenticationFilter: Insufficient permissions for sensitive operation");
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -146,19 +131,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isAuthorizedForSensitiveOperation(String requestURI, String method, Role role) {
-        // Super admin has access to everything
         if (role == Role.SUPER_ADMIN) {
             return true;
         }
 
-        // Admin can access admin endpoints and some sensitive operations
         if (role == Role.ADMIN) {
             return requestURI.startsWith("/api/admin/") || 
                    requestURI.startsWith("/api/product/delete") ||
                    requestURI.startsWith("/api/student/delete");
         }
 
-        // Students can only access their own data and create/update their products
         if (role == Role.STUDENT) {
             return requestURI.startsWith("/api/product/create") ||
                    requestURI.startsWith("/api/product/update") ||

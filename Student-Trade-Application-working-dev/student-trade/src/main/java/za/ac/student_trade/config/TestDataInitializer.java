@@ -11,7 +11,7 @@ import za.ac.student_trade.service.Impl.StudentServiceImpl;
 import za.ac.student_trade.service.Impl.SuperAdminServiceImpl;
 
 @Component
-@Order(2) // Run after PasswordMigrationService
+@Order(2)
 public class TestDataInitializer implements CommandLineRunner {
 
     @Autowired
@@ -33,7 +33,7 @@ public class TestDataInitializer implements CommandLineRunner {
 
     private void createTestUsers() {
         try {
-            // Create test student if doesn't exist
+
             if (studentService.getAll().stream().noneMatch(s -> s.getEmail().equals("test.student@example.com"))) {
                 Student testStudent = new Student.Builder()
                         .setStudentId("TEST001")
@@ -44,10 +44,10 @@ public class TestDataInitializer implements CommandLineRunner {
                         .build();
 
                 studentService.create(testStudent);
-                System.out.println("✅ Created test student: test.student@example.com / student123");
+                System.out.println("Created test student: test.student@example.com / student123");
             }
 
-            // Create test admin if doesn't exist
+
             if (administratorService.getAll().stream().noneMatch(a -> a.getEmail().equals("test.admin@example.com"))) {
                 Administrator testAdmin = new Administrator.Builder()
                         .setUsername("testadmin")
@@ -56,10 +56,10 @@ public class TestDataInitializer implements CommandLineRunner {
                         .build();
 
                 administratorService.create(testAdmin);
-                System.out.println("✅ Created test admin: test.admin@example.com / admin123");
+                System.out.println(" Created test admin: test.admin@example.com / admin123");
             }
 
-            // Create test superadmin if doesn't exist
+
             if (superAdminService.getAll().stream()
                     .noneMatch(sa -> sa.getEmail().equals("test.superadmin@example.com"))) {
                 SuperAdmin testSuperAdmin = new SuperAdmin.Builder()
@@ -69,11 +69,11 @@ public class TestDataInitializer implements CommandLineRunner {
                         .build();
 
                 superAdminService.create(testSuperAdmin);
-                System.out.println("✅ Created test superadmin: test.superadmin@example.com / superadmin123");
+                System.out.println("Created test superadmin: test.superadmin@example.com / superadmin123");
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error creating test users: " + e.getMessage());
+            System.err.println(" Error creating test users: " + e.getMessage());
         }
     }
 }

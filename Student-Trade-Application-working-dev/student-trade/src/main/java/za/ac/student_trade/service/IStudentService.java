@@ -11,7 +11,5 @@ public interface IStudentService extends IService<Student , String> {
 
     void delete(String id);
 
-    //Student updateStudent(String studentId, StudentUpdateRequest request, MultipartFile profileImage) throws IOException;
-
     Student updateStudent(String studentId, Student request, MultipartFile profileImage) throws IOException;
 }
